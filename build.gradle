@@ -9,10 +9,10 @@ buildscript {
         version_code = 1
         version_code_name = '1.0'
 
+        compose_version = '1.0.5'
         androidx_core_ktx_version = '1.7.0'
         androidx_common_ui_version = '1.4.0'
         androidx_common_dependencies_version = '2.4.0'
-        compose_version = '1.0.5'
 
         junit_version = '4.13.2'
         test_junit_implementation_version = '1.1.3'
