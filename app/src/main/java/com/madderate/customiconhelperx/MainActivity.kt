@@ -55,7 +55,6 @@ class MainActivity : BaseActivity() {
             userInput = response.result?.searchKeyword ?: "",
             index = response.result?.index ?: 0,
             bitmap = response.result?.bitmap,
-            imageUrls = vm.imageUrls,
             onUiAction = vm::onUiAction,
             onUiNav = vm::onUiNav,
             snackbarHostState = snackbarHostState,
@@ -69,7 +68,6 @@ class MainActivity : BaseActivity() {
         userInput: String,
         index: Int,
         bitmap: Bitmap?,
-        imageUrls: List<String>,
         onUiAction: (UiAction) -> Unit,
         onUiNav: (BaseActivity, UiNav) -> Unit,
         snackbarHostState: SnackbarHostState,
@@ -97,7 +95,7 @@ class MainActivity : BaseActivity() {
                 }
             )
             TextAndButton(index, onIndexChange = onUiAction)
-            BitmapArea(bitmap, imageUrls, onUiAction)
+            BitmapArea(bitmap, onUiAction)
         }
     }
 
@@ -148,11 +146,10 @@ class MainActivity : BaseActivity() {
     @Composable
     private fun BitmapArea(
         bitmap: Bitmap?,
-        imageUrls: List<String>,
         onBitmapChanged: (MainViewModel.UpdateImage) -> Unit,
     ) {
         Button(
-            onClick = { onBitmapChanged(MainViewModel.UpdateImage(imageUrls.random())) },
+            onClick = { onBitmapChanged(MainViewModel.UpdateImage) },
             modifier = Modifier.padding(vertical = 16.dp)
         ) {
             Text(text = stringResource(id = R.string.image_button))
@@ -160,7 +157,7 @@ class MainActivity : BaseActivity() {
         if (bitmap == null || bitmap.isRecycled) return
         Image(
             modifier = Modifier
-                .size(100.dp, 150.dp)
+                .size(width = 100.dp, height = 150.dp)
                 .padding(vertical = 16.dp)
                 .border(3.dp, Color.Cyan),
             bitmap = bitmap.asImageBitmap(),
@@ -191,7 +188,6 @@ class MainActivity : BaseActivity() {
                 userInput = "你好",
                 index = 32,
                 bitmap = null,
-                imageUrls = emptyList(),
                 onUiAction = {},
                 onUiNav = { _, _ -> },
                 snackbarHostState = snackbarHostState
