@@ -25,7 +25,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _response = MutableStateFlow<ViewState<MainResult>>(ViewState())
     val response: StateFlow<ViewState<MainResult>> = _response
 
-    fun onUiAction(uiAction: UiAction) {
+    fun onUiAction(uiAction: MainUiAction) {
         when (uiAction) {
             is Increase -> {
                 val count = uiAction.count
@@ -50,7 +50,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun onUiNav(activity: BaseActivity, uiNav: UiNav) {
+    fun onUiNav(activity: BaseActivity, uiNav: MainUiNav) {
         when (uiNav) {
             ToIconSelect -> IconSelectActivity.launch(activity)
         }
@@ -71,13 +71,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     //region From UI
     //region Action from UI
-    class Search(val keyword: String) : UiAction
-    class Increase(val count: Int) : UiAction
-    object UpdateImage : UiAction
+    sealed interface MainUiAction
+    class Search(val keyword: String) : MainUiAction
+    class Increase(val count: Int) : MainUiAction
+    object UpdateImage : MainUiAction
     //endregion
 
     //region Navigation from UI
-    object ToIconSelect : UiNav
+    sealed interface MainUiNav
+    object ToIconSelect : MainUiNav
     //endregion
     //endregion
 }

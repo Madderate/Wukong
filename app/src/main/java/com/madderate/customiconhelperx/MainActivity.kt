@@ -28,8 +28,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.madderate.customiconhelperx.base.BaseActivity
 import com.madderate.customiconhelperx.ui.theme.CustomIconHelperXBasicTheme
 import com.madderate.customiconhelperx.viewmodel.MainViewModel
-import com.madderate.customiconhelperx.viewmodel.UiAction
-import com.madderate.customiconhelperx.viewmodel.UiNav
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -68,8 +66,8 @@ class MainActivity : BaseActivity() {
         userInput: String,
         index: Int,
         bitmap: Bitmap?,
-        onUiAction: (UiAction) -> Unit,
-        onUiNav: (BaseActivity, UiNav) -> Unit,
+        onUiAction: (MainViewModel.MainUiAction) -> Unit,
+        onUiNav: (BaseActivity, MainViewModel.MainUiNav) -> Unit,
         snackbarHostState: SnackbarHostState,
         modifier: Modifier = Modifier,
         scope: CoroutineScope = rememberCoroutineScope(),

@@ -2,6 +2,8 @@
     <string name="app_name">CustomIconHelperX</string>
 
     <string name="add">Add</string>
+    <string name="done">Done</string>
+    <string name="back">Back</string>
     <string name="value_is">Value: %d</string>
     <string name="user_input">Input something…</string>
     <string name="image_content_description">Yeeeeeeee</string>

@@ -5,5 +5,3 @@ data class ViewState<T>(
     val result: T? = null
 )
 
-sealed interface UiAction
-sealed interface UiNav
