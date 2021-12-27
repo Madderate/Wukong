@@ -2,11 +2,13 @@ package com.madderate.customiconhelperx.viewmodel.main
 
 import android.app.Application
 import android.content.Context
-import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.bumptech.glide.Glide
+import com.madderate.customiconhelperx.IconSelectActivity
+import com.madderate.customiconhelperx.base.BaseActivity
+import com.madderate.customiconhelperx.model.MainResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +19,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         private const val TAG = "MainViewModel"
     }
 
-    private val mImageUrls = listOf(
+    val imageUrls = listOf(
         "https://c-ssl.duitang.com/uploads/blog/202110/30/20211030023858_db819.jpg",
         "https://c-ssl.duitang.com/uploads/blog/202110/30/20211030023859_1cda2.thumb.1000_0.jpg_webp",
         "https://c-ssl.duitang.com/uploads/blog/202110/30/20211030023900_2326a.thumb.1000_0.jpg_webp"
@@ -36,10 +38,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val newValue = response.value.result.copy(searchKeywork = uiAction.keyword)
                 _response.value = _response.value.copy(result = newValue)
             }
-            UpdateImage -> viewModelScope.launch(Dispatchers.IO) {
+            is UpdateImage -> viewModelScope.launch(Dispatchers.IO) {
                 kotlin.runCatching {
                     val context = getApplication() as Context
-                    Glide.with(context).asBitmap().load(mImageUrls.random()).submit().get()!!
+                    Glide.with(context).asBitmap().load(uiAction.url).submit().get()!!
                 }.onSuccess {
                     val newValue = _response.value.result.copy(bitmap = it)
                     _response.value = _response.value.copy(result = newValue)
@@ -50,19 +52,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun onUiNav(activity: BaseActivity, uiNav: UiNav) {
+        when (uiNav) {
+            ToIconSelect -> IconSelectActivity.launch(activity)
+        }
+    }
+
+    //region State, contain result model.
     data class ViewState(
         val isLoading: Boolean = true,
-        val result: MainResponseModel = MainResponseModel()
+        val result: MainResult = MainResult()
     )
+    //endregion
 
-    data class MainResponseModel(
-        val index: Int = 0,
-        val bitmap: Bitmap? = null,
-        val searchKeywork: String = ""
-    )
-
+    //region From UI
+    //region Action from UI
     sealed interface UiAction
     class Search(val keyword: String) : UiAction
     class Increase(val count: Int) : UiAction
-    object UpdateImage : UiAction
+    class UpdateImage(val url: String) : UiAction
+    //endregion
+
+    //region Navigation from UI
+    sealed interface UiNav
+    object ToIconSelect : UiNav
+    //endregion
+    //endregion
 }

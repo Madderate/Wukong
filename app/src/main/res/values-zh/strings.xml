@@ -6,4 +6,7 @@
     <string name="user_input">说些什么吧......</string>
     <string name="image_content_description">哦哦哦哦哦哦哦</string>
     <string name="image_button">点击此按钮更换图片</string>
+    <string name="button_to_icon_select">选择图标…</string>
+
+    <string name="label_icon_select">选择图标</string>
 </resources>

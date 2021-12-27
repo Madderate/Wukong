@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".base.BaseApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -23,7 +24,11 @@
             </intent-filter>
         </activity>
 
-
+        <activity
+            android:name=".IconSelectActivity"
+            android:exported="false"
+            android:label="@string/label_icon_select"
+            android:theme="@style/Theme.CustomIconHelperX.NoActionBar" />
     </application>
 
 </manifest>

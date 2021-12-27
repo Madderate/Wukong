@@ -2,7 +2,6 @@ package com.madderate.customiconhelperx
 
 import android.graphics.Bitmap
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
@@ -26,12 +25,13 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.madderate.customiconhelperx.base.BaseActivity
 import com.madderate.customiconhelperx.ui.theme.CustomIconHelperXTheme
 import com.madderate.customiconhelperx.viewmodel.main.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+class MainActivity : BaseActivity() {
     companion object {
         const val GROUP_NAME = "MainActivity"
     }
@@ -62,7 +62,9 @@ class MainActivity : ComponentActivity() {
             userInput = response.result.searchKeywork,
             index = response.result.index,
             bitmap = response.result.bitmap,
+            imageUrls = vm.imageUrls,
             onUiAction = vm::onUiAction,
+            onUiNav = vm::onUiNav,
             snackbarHostState = snackbarHostState,
             modifier = Modifier.fillMaxSize()
         )
@@ -74,7 +76,9 @@ class MainActivity : ComponentActivity() {
         userInput: String,
         index: Int,
         bitmap: Bitmap?,
+        imageUrls: List<String>,
         onUiAction: (MainViewModel.UiAction) -> Unit,
+        onUiNav: (BaseActivity, MainViewModel.UiNav) -> Unit,
         snackbarHostState: SnackbarHostState,
         modifier: Modifier = Modifier,
         scope: CoroutineScope = rememberCoroutineScope(),
@@ -86,6 +90,12 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = parentArrangement,
             horizontalAlignment = parentAlignment
         ) {
+            Button(
+                onClick = { onUiNav(this@MainActivity, MainViewModel.ToIconSelect) },
+                modifier = Modifier.padding(vertical = 16.dp)
+            ) {
+                Text(text = stringResource(id = R.string.button_to_icon_select))
+            }
             UserInput(
                 userInput,
                 onUserInputChanged = onUiAction,
@@ -94,7 +104,7 @@ class MainActivity : ComponentActivity() {
                 }
             )
             TextAndButton(index, onIndexChange = onUiAction)
-            BitmapArea(bitmap, onUiAction)
+            BitmapArea(bitmap, imageUrls, onUiAction)
         }
     }
 
@@ -143,9 +153,13 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun BitmapArea(bitmap: Bitmap?, onBitmapChanged: (MainViewModel.UpdateImage) -> Unit) {
+    private fun BitmapArea(
+        bitmap: Bitmap?,
+        imageUrls: List<String>,
+        onBitmapChanged: (MainViewModel.UpdateImage) -> Unit,
+    ) {
         Button(
-            onClick = { onBitmapChanged(MainViewModel.UpdateImage) },
+            onClick = { onBitmapChanged(MainViewModel.UpdateImage(imageUrls.random())) },
             modifier = Modifier.padding(vertical = 16.dp)
         ) {
             Text(text = stringResource(id = R.string.image_button))
@@ -185,7 +199,9 @@ class MainActivity : ComponentActivity() {
                     userInput = "你好",
                     index = 32,
                     bitmap = null,
+                    imageUrls = emptyList(),
                     onUiAction = {},
+                    onUiNav = { _, _ -> },
                     snackbarHostState = snackbarHostState
                 )
                 SnackbarArea(snackbarHostState = snackbarHostState)
