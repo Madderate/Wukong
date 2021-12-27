@@ -8,5 +8,7 @@
     <string name="image_button">click this to change image</string>
     <string name="button_to_icon_select">To Icon Select</string>
 
+    <string name="icon_select_page_title">Select Icon</string>
+
     <string name="label_icon_select">IconSelect</string>
 </resources>

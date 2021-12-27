@@ -26,8 +26,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.madderate.customiconhelperx.base.BaseActivity
-import com.madderate.customiconhelperx.ui.theme.CustomIconHelperXTheme
-import com.madderate.customiconhelperx.viewmodel.main.MainViewModel
+import com.madderate.customiconhelperx.ui.theme.CustomIconHelperXBasicTheme
+import com.madderate.customiconhelperx.viewmodel.MainViewModel
+import com.madderate.customiconhelperx.viewmodel.UiAction
+import com.madderate.customiconhelperx.viewmodel.UiNav
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -40,16 +42,8 @@ class MainActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { ContentEntry() }
-    }
-
-    @Composable
-    private fun ContentEntry() {
-        CustomIconHelperXTheme {
-            // A surface container using the 'background' color from the theme
-            Surface(color = MaterialTheme.colors.background) {
-                MainContent(mViewModel)
-            }
+        setContent {
+            CustomIconHelperXBasicTheme { MainContent(mViewModel) }
         }
     }
 
@@ -57,11 +51,10 @@ class MainActivity : BaseActivity() {
     private fun MainContent(vm: MainViewModel = viewModel()) {
         val response by vm.response.collectAsState()
         val snackbarHostState = remember { SnackbarHostState() }
-
         UserInterfaceArea(
-            userInput = response.result.searchKeywork,
-            index = response.result.index,
-            bitmap = response.result.bitmap,
+            userInput = response.result?.searchKeyword ?: "",
+            index = response.result?.index ?: 0,
+            bitmap = response.result?.bitmap,
             imageUrls = vm.imageUrls,
             onUiAction = vm::onUiAction,
             onUiNav = vm::onUiNav,
@@ -77,8 +70,8 @@ class MainActivity : BaseActivity() {
         index: Int,
         bitmap: Bitmap?,
         imageUrls: List<String>,
-        onUiAction: (MainViewModel.UiAction) -> Unit,
-        onUiNav: (BaseActivity, MainViewModel.UiNav) -> Unit,
+        onUiAction: (UiAction) -> Unit,
+        onUiNav: (BaseActivity, UiNav) -> Unit,
         snackbarHostState: SnackbarHostState,
         modifier: Modifier = Modifier,
         scope: CoroutineScope = rememberCoroutineScope(),
@@ -192,20 +185,18 @@ class MainActivity : BaseActivity() {
     )
     @Composable
     private fun TotalPreview() {
-        CustomIconHelperXTheme {
-            Surface(color = MaterialTheme.colors.background) {
-                val snackbarHostState = remember { SnackbarHostState() }
-                UserInterfaceArea(
-                    userInput = "你好",
-                    index = 32,
-                    bitmap = null,
-                    imageUrls = emptyList(),
-                    onUiAction = {},
-                    onUiNav = { _, _ -> },
-                    snackbarHostState = snackbarHostState
-                )
-                SnackbarArea(snackbarHostState = snackbarHostState)
-            }
+        CustomIconHelperXBasicTheme {
+            val snackbarHostState = remember { SnackbarHostState() }
+            UserInterfaceArea(
+                userInput = "你好",
+                index = 32,
+                bitmap = null,
+                imageUrls = emptyList(),
+                onUiAction = {},
+                onUiNav = { _, _ -> },
+                snackbarHostState = snackbarHostState
+            )
+            SnackbarArea(snackbarHostState = snackbarHostState)
         }
     }
     //endregion

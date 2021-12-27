@@ -8,5 +8,7 @@
     <string name="image_button">点击此按钮更换图片</string>
     <string name="button_to_icon_select">选择图标…</string>
 
+    <string name="icon_select_page_title">选择图标</string>
+
     <string name="label_icon_select">选择图标</string>
 </resources>

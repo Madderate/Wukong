@@ -1,4 +1,4 @@
-package com.madderate.customiconhelperx.viewmodel.iconselect
+package com.madderate.customiconhelperx.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
