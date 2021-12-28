@@ -13,4 +13,6 @@
     <string name="icon_select_page_title">选择图标</string>
 
     <string name="label_icon_select">选择图标</string>
+
+    <string name="default_installed_app_name">未知应用</string>
 </resources>

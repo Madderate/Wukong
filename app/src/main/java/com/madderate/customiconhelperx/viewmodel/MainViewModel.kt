@@ -22,8 +22,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         "https://c-ssl.duitang.com/uploads/blog/202110/30/20211030023900_2326a.thumb.1000_0.jpg_webp"
     )
 
-    private val _response = MutableStateFlow<ViewState<MainResult>>(ViewState())
-    val response: StateFlow<ViewState<MainResult>> = _response
+    private val _response = MutableStateFlow<UiState<MainResult>>(UiState())
+    val response: StateFlow<UiState<MainResult>> = _response
 
     fun onUiAction(uiAction: MainUiAction) {
         when (uiAction) {

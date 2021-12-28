@@ -13,4 +13,6 @@
     <string name="icon_select_page_title">Select Icon</string>
 
     <string name="label_icon_select">IconSelect</string>
+
+    <string name="default_installed_app_name">Unknown Application</string>
 </resources>

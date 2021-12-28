@@ -1,6 +1,6 @@
 package com.madderate.customiconhelperx.viewmodel
 
-data class ViewState<T>(
+data class UiState<T>(
     val isLoading: Boolean = true,
     val result: T? = null
 )
