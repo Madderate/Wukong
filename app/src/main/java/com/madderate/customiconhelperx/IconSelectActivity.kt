@@ -2,15 +2,12 @@ package com.madderate.customiconhelperx
 
 import android.content.Intent
 import android.content.pm.PackageInfo
-import android.graphics.drawable.Drawable
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Scaffold
@@ -20,6 +17,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,6 +28,7 @@ import androidx.constraintlayout.compose.Dimension
 import androidx.core.graphics.drawable.toBitmap
 import com.madderate.customiconhelperx.base.BaseActivity
 import com.madderate.customiconhelperx.ui.theme.CustomIconHelperXBasicTheme
+import com.madderate.customiconhelperx.ui.theme.Placeholder
 import com.madderate.customiconhelperx.ui.views.BasicFAB
 import com.madderate.customiconhelperx.ui.views.BasicTopAppBars
 import com.madderate.customiconhelperx.viewmodel.IconSelectViewModel
@@ -85,10 +85,9 @@ class IconSelectActivity : BaseActivity() {
 
     @Composable
     private fun PackageInfoRow(packageInfo: PackageInfo) {
-        val drawable: Drawable = packageInfo.applicationInfo?.loadIcon(packageManager)
-            ?: return
+        val iconBmp: Bitmap? = packageInfo.applicationInfo?.loadIcon(packageManager)?.toBitmap()
         val appName: String = packageInfo.applicationInfo?.loadLabel(packageManager)?.toString()
-            ?: return
+            ?: ""
         ConstraintLayout(
             modifier = Modifier
                 .fillMaxWidth()
@@ -96,17 +95,38 @@ class IconSelectActivity : BaseActivity() {
                 .padding(vertical = 16.dp)
         ) {
             val (icon, name) = createRefs()
-            Image(
-                bitmap = drawable.toBitmap().asImageBitmap(),
-                contentDescription = appName,
-                modifier = Modifier
-                    .constrainAs(icon) {
-                        start.linkTo(parent.start)
-                        top.linkTo(parent.top)
-                        bottom.linkTo(parent.bottom)
-                    }
-                    .padding(start = 16.dp)
-            )
+            if (iconBmp == null) {
+                Image(
+                    painter = ColorPainter(Placeholder),
+                    contentDescription = appName,
+                    modifier = Modifier
+                        .constrainAs(icon) {
+                            start.linkTo(parent.start)
+                            top.linkTo(parent.top)
+                            bottom.linkTo(parent.bottom)
+                            width = Dimension.value((80 - 16 * 2).dp)
+                            height = Dimension.fillToConstraints
+                        }
+                        .padding(start = 16.dp)
+                        .aspectRatio(1f, true),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    bitmap = iconBmp.asImageBitmap(),
+                    contentDescription = appName,
+                    modifier = Modifier
+                        .constrainAs(icon) {
+                            start.linkTo(parent.start)
+                            top.linkTo(parent.top)
+                            bottom.linkTo(parent.bottom)
+                            height = Dimension.fillToConstraints
+                        }
+                        .padding(start = 16.dp)
+                        .aspectRatio(1f),
+                    contentScale = ContentScale.Crop
+                )
+            }
             Text(
                 text = appName,
                 modifier = Modifier
