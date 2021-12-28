@@ -4,6 +4,9 @@
     <string name="add">添加</string>
     <string name="done">完成</string>
     <string name="back">返回</string>
+    <string name="error">出错了</string>
+    <string name="default_error_msg">出现错误…</string>
+
     <string name="value_is">当前值: %d</string>
     <string name="user_input">说些什么吧......</string>
     <string name="image_content_description">哦哦哦哦哦哦哦</string>

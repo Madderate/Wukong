@@ -3,39 +3,34 @@ package com.madderate.customiconhelperx.viewmodel
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.bumptech.glide.Glide
 import com.madderate.customiconhelperx.IconSelectActivity
 import com.madderate.customiconhelperx.base.BaseActivity
+import com.madderate.customiconhelperx.base.BaseViewModel
 import com.madderate.customiconhelperx.model.MainResult
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.max
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+class MainViewModel(application: Application) : BaseViewModel<MainResult>(application) {
     private val mImageUrls = listOf(
         "https://c-ssl.duitang.com/uploads/blog/202110/30/20211030023858_db819.jpg",
         "https://c-ssl.duitang.com/uploads/blog/202110/30/20211030023859_1cda2.thumb.1000_0.jpg_webp",
         "https://c-ssl.duitang.com/uploads/blog/202110/30/20211030023900_2326a.thumb.1000_0.jpg_webp"
     )
 
-    private val _response = MutableStateFlow<UiState<MainResult>>(UiState())
-    val response: StateFlow<UiState<MainResult>> = _response
-
     fun onUiAction(uiAction: MainUiAction) {
         when (uiAction) {
             is Increase -> {
                 val count = uiAction.count
-                val value = _response.value.result.copyEvenNull(index = count)
-                _response.value = _response.value.copy(isLoading = false, value)
+                val value = mutableUiState.value.result.copyEvenNull(index = count)
+                mutableUiState.value = mutableUiState.value.copy(isLoading = false, value)
             }
             is Search -> {
                 val keyword = uiAction.keyword
-                val value = _response.value.result.copyEvenNull(searchKeyword = keyword)
-                _response.value = _response.value.copy(isLoading = false, value)
+                val value = mutableUiState.value.result.copyEvenNull(searchKeyword = keyword)
+                mutableUiState.value = mutableUiState.value.copy(isLoading = false, value)
             }
             is UpdateImage -> viewModelScope.launch(Dispatchers.IO) {
                 kotlin.runCatching {
@@ -43,8 +38,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val url = mImageUrls.random()
                     Glide.with(context).asBitmap().load(url).submit().get()!!
                 }.onSuccess {
-                    val value = _response.value.result.copyEvenNull(bitmap = it)
-                    _response.value = _response.value.copy(isLoading = false, value)
+                    val value = mutableUiState.value.result.copyEvenNull(bitmap = it)
+                    mutableUiState.value = mutableUiState.value.copy(isLoading = false, value)
                 }
             }
         }

@@ -2,20 +2,16 @@ package com.madderate.customiconhelperx.viewmodel
 
 import android.app.Application
 import android.content.pm.PackageManager
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.madderate.customiconhelperx.base.BaseViewModel
 import com.madderate.customiconhelperx.model.InstalledAppInfo
 import com.madderate.customiconhelperx.utils.LogUtils
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class IconSelectViewModel(application: Application) : AndroidViewModel(application) {
-    private val _response = MutableStateFlow<UiState<List<InstalledAppInfo>>>(UiState())
-    val response: StateFlow<UiState<List<InstalledAppInfo>>> = _response
-
+class IconSelectViewModel(application: Application) :
+    BaseViewModel<List<InstalledAppInfo>>(application) {
     init {
         viewModelScope.launch {
             val packageManager = application.packageManager
@@ -36,10 +32,11 @@ class IconSelectViewModel(application: Application) : AndroidViewModel(applicati
                     }
                 }
             }
-        }.onSuccess { packages ->
-            _response.value = _response.value.copy(isLoading = false, result = packages)
+        }.onSuccess { infos ->
+            mutableUiState.value = mutableUiState.value.copy(isLoading = false, result = infos)
         }.onFailure {
             LogUtils.e("Error occured when try to get packages...", it)
+            mutableUiState.value = mutableUiState.value.copy(isLoading = false, result = null, error = it)
         }
 
     fun onUiAction(action: IconSelectUiAction) {

@@ -47,12 +47,12 @@ class MainActivity : BaseActivity() {
 
     @Composable
     private fun MainContent(vm: MainViewModel = viewModel()) {
-        val response by vm.response.collectAsState()
+        val uiState by vm.uiState.collectAsState()
         val snackbarHostState = remember { SnackbarHostState() }
         UserInterfaceArea(
-            userInput = response.result?.searchKeyword ?: "",
-            index = response.result?.index ?: 0,
-            bitmap = response.result?.bitmap,
+            userInput = uiState.result?.searchKeyword ?: "",
+            index = uiState.result?.index ?: 0,
+            bitmap = uiState.result?.bitmap,
             onUiAction = vm::onUiAction,
             onUiNav = vm::onUiNav,
             snackbarHostState = snackbarHostState,
