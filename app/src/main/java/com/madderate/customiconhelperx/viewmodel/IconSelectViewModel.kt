@@ -42,13 +42,20 @@ class IconSelectViewModel(application: Application) :
     fun onUiAction(action: IconSelectUiAction) {
         when (action) {
             is Select -> {
-
+                val oldList =  mutableUiState.value.result
+                kotlin.runCatching {
+                    oldList!!.apply {
+                        get(action.position).isSelected = action.shouldSelect
+                    }
+                }.onSuccess {
+                    mutableUiState.value = mutableUiState.value.copy(isLoading = false, result = it)
+                }
             }
         }
     }
 
     sealed interface IconSelectUiAction
-    class Select(val position: Int) : IconSelectUiAction
+    class Select(val position: Int, val shouldSelect: Boolean) : IconSelectUiAction
 
     sealed interface IconSelectUiNav
 }

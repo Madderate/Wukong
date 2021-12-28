@@ -8,13 +8,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -67,7 +66,7 @@ class IconSelectActivity : BaseActivity() {
         }
         if (!uiState.isLoading && !infos.isNullOrEmpty()) {
             // successfully loaded
-            MainContentInner(infos)
+            MainContentInner(infos, vm::onUiAction)
             return
         }
         // load error
@@ -95,24 +94,34 @@ class IconSelectActivity : BaseActivity() {
 
     //region MainContent
     @Composable
-    private fun MainContentInner(infos: List<InstalledAppInfo>) {
+    private fun MainContentInner(
+        infos: List<InstalledAppInfo>,
+        onUiAction: (IconSelectViewModel.IconSelectUiAction) -> Unit
+    ) {
         Scaffold(
             topBar = {
                 BasicTopAppBars(stringRes = R.string.icon_select_page_title) { onBackPressed() }
             },
             floatingActionButton = { BasicFAB() }
-        ) { PackageInfoLazyColumn(infos = infos) }
+        ) { PackageInfoLazyColumn(infos, onUiAction) }
     }
 
     @Composable
-    private fun PackageInfoLazyColumn(infos: List<InstalledAppInfo>) {
+    private fun PackageInfoLazyColumn(
+        infos: List<InstalledAppInfo>,
+        onUiAction: (IconSelectViewModel.IconSelectUiAction) -> Unit
+    ) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(infos) { info -> PackageInfoRow(info = info) }
+            itemsIndexed(infos) { i, info -> PackageInfoRow(i, info, onUiAction) }
         }
     }
 
     @Composable
-    private fun PackageInfoRow(info: InstalledAppInfo) {
+    private fun PackageInfoRow(
+        index: Int,
+        info: InstalledAppInfo,
+        onClick: (IconSelectViewModel.IconSelectUiAction) -> Unit
+    ) {
         val painter = rememberImagePainter(
             data = info.iconDrawable,
             builder = {
@@ -125,20 +134,22 @@ class IconSelectActivity : BaseActivity() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp)
-                .clickable { },
+                .clickable {
+                    onClick(IconSelectViewModel.Select(index, !info.isSelected))
+                },
         ) {
-            val (icon, name) = createRefs()
+            val (icon, name, check) = createRefs()
             Image(
                 painter = painter,
                 contentDescription = appName,
                 modifier = Modifier
                     .constrainAs(icon) {
-                        start.linkTo(parent.start)
+                        start.linkTo(parent.start, 16.dp)
                         top.linkTo(parent.top)
                         bottom.linkTo(parent.bottom)
                         height = Dimension.fillToConstraints
                     }
-                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
+                    .padding(vertical = 16.dp)
                     .aspectRatio(1f),
                 contentScale = ContentScale.Crop
             )
@@ -149,7 +160,7 @@ class IconSelectActivity : BaseActivity() {
                         start.linkTo(icon.end, 16.dp)
                         top.linkTo(parent.top)
                         bottom.linkTo(parent.bottom)
-                        end.linkTo(parent.end)
+                        end.linkTo(check.start, 16.dp)
                         width = Dimension.fillToConstraints
                         height = Dimension.wrapContent
                     }
@@ -157,6 +168,19 @@ class IconSelectActivity : BaseActivity() {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Start
+            )
+            Checkbox(
+                checked = info.isSelected,
+                onCheckedChange = { checked ->
+                    onClick(IconSelectViewModel.Select(index, checked))
+                },
+                modifier = Modifier
+                    .wrapContentSize()
+                    .constrainAs(check) {
+                        end.linkTo(parent.end, 16.dp)
+                        top.linkTo(parent.top)
+                        bottom.linkTo(parent.bottom)
+                    }
             )
         }
     }
@@ -166,7 +190,8 @@ class IconSelectActivity : BaseActivity() {
     @Composable
     private fun IconSelectActivityPreview() {
         CustomIconHelperXBasicTheme {
-            MainContentInner(emptyList())
+            val list = listOf(InstalledAppInfo(null, "madderate", true))
+            MainContentInner(list) {}
         }
     }
 }
