@@ -2,6 +2,8 @@ package com.madderate.customiconhelperx.viewmodel
 
 import android.app.Application
 import android.content.pm.PackageManager
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.viewModelScope
 import com.madderate.customiconhelperx.base.BaseViewModel
 import com.madderate.customiconhelperx.model.InstalledAppInfo
@@ -11,7 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class IconSelectViewModel(application: Application) :
-    BaseViewModel<List<InstalledAppInfo>>(application) {
+    BaseViewModel<SnapshotStateList<InstalledAppInfo>>(application) {
     init {
         viewModelScope.launch {
             val packageManager = application.packageManager
@@ -33,7 +35,8 @@ class IconSelectViewModel(application: Application) :
                 }
             }
         }.onSuccess { infos ->
-            mutableUiState.value = mutableUiState.value.copy(isLoading = false, result = infos)
+            mutableUiState.value =
+                mutableUiState.value.copy(isLoading = false, result = infos.toMutableStateList())
         }.onFailure {
             LogUtils.e("Error occured when try to get packages...", it)
             mutableUiState.value = mutableUiState.value.copy(isLoading = false, result = null, error = it)
@@ -42,13 +45,10 @@ class IconSelectViewModel(application: Application) :
     fun onUiAction(action: IconSelectUiAction) {
         when (action) {
             is Select -> {
-                val oldList =  mutableUiState.value.result
+                val list =  mutableUiState.value.result ?: return
+                val i = action.position
                 kotlin.runCatching {
-                    oldList!!.apply {
-                        get(action.position).isSelected = action.shouldSelect
-                    }
-                }.onSuccess {
-                    mutableUiState.value = mutableUiState.value.copy(isLoading = false, result = it)
+                    list[i] = list[i].apply { isSelected = action.shouldSelect }
                 }
             }
         }
