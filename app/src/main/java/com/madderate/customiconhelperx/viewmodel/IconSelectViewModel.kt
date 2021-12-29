@@ -17,8 +17,12 @@ import kotlinx.coroutines.withContext
 class IconSelectViewModel(
     application: Application
 ) : BaseViewModel<SnapshotStateList<InstalledAppInfo>>(application) {
-    private val _hasAppSelected = MutableStateFlow(false)
-    val hasAppSelected: StateFlow<Boolean> = _hasAppSelected
+    companion object {
+        const val DEFAULT_INDEX = -1
+    }
+
+    private val _selectedIndex = MutableStateFlow(DEFAULT_INDEX)
+    val selectedIndex: StateFlow<Int> = _selectedIndex
 
     init {
         viewModelScope.launch {
@@ -49,23 +53,49 @@ class IconSelectViewModel(
         }
 
     fun onUiAction(action: IconSelectUiAction) {
-        if (action is Select) {
-            updateSelectState(action.position, action.shouldSelect)
-            return
+        when (action) {
+            CreateCustomIcon ->
+                createCustomIcon(selectedIndex.value)
+            is Select ->
+                updateSelectItem(action.position, action.shouldSelect)
         }
     }
 
-    private fun updateSelectState(position: Int, shouldSelect: Boolean) {
-        val oldUiState = mutableUiState.value.current
-        if (oldUiState !is UiState.Success) return
-        val list = oldUiState.result.takeIf { it.isNotEmpty() } ?: return
+    private fun createCustomIcon(index: Int) {
+        val current = uiState.value.current
+        if (current !is UiState.Success) return
+        current.runCatching {
+            val item = result[index]
+            LogUtils.d("selected item: $index, item name: ${item.name}, is selected: ${item.isSelected}")
+        }
+    }
+
+    private fun updateSelectItem(position: Int, shouldSelect: Boolean) {
+        val last = uiState.value.current
+        if (last !is UiState.Success) return
+        val lastI = selectedIndex.value
+        val lastL = last.result.takeIf { it.isNotEmpty() } ?: return
+        // revert last selected
         kotlin.runCatching {
-            list[position] = list[position].apply { isSelected = shouldSelect }
+            LogUtils.d("last selected: $lastI")
+            if (lastI != position)
+                lastL[lastI] = lastL[lastI].apply { this.isSelected = !this.isSelected }
+        }.onFailure {
+            LogUtils.e("Error occured when revert last selected.", it)
+        }
+        // update current selected && selectedIndex
+        kotlin.runCatching {
+            lastL[position] = lastL[position].apply { isSelected = shouldSelect }
+            if (shouldSelect) {
+                _selectedIndex.value = position
+            } else _selectedIndex.value = DEFAULT_INDEX
+            LogUtils.d("current pos: $position, shouldSelect: $shouldSelect")
         }
     }
 
     sealed interface IconSelectUiAction
     class Select(val position: Int, val shouldSelect: Boolean) : IconSelectUiAction
+    object CreateCustomIcon : IconSelectUiAction
 
     sealed interface IconSelectUiNav
 }

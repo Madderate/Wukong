@@ -23,6 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
+import coil.compose.ImagePainter
 import coil.compose.rememberImagePainter
 import com.madderate.customiconhelperx.base.BaseActivity
 import com.madderate.customiconhelperx.model.InstalledAppInfo
@@ -55,28 +56,42 @@ class IconSelectActivity : BaseActivity() {
     @Composable
     private fun MainContent(vm: IconSelectViewModel) {
         val uiState by vm.uiState.collectAsState()
+        val selectedIndex by vm.selectedIndex.collectAsState()
         when (val current = uiState.current) {
             is UiState.Error ->
                 ErrorUi(errMsg = current.errMsg)
             is UiState.Loading ->
                 LoadingUi()
             is UiState.Success ->
-                MainContentInner(current.result, vm::onUiAction)
+                MainContentInner(
+                    available = selectedIndex != IconSelectViewModel.DEFAULT_INDEX,
+                    infos = current.result,
+                    onUiAction = vm::onUiAction
+                )
         }
     }
 
     //region MainContent
     @Composable
     private fun MainContentInner(
+        available: Boolean,
         infos: List<InstalledAppInfo>,
         onUiAction: (IconSelectViewModel.IconSelectUiAction) -> Unit
     ) {
         Scaffold(
             topBar = {
-                BasicTopAppBars(stringRes = R.string.icon_select_page_title) { onBackPressed() }
+                BasicTopAppBars(stringRes = R.string.icon_select_page_title) {
+                    onBackPressed()
+                }
             },
-            floatingActionButton = { BasicFAB() }
-        ) { PackageInfoLazyColumn(infos, onUiAction) }
+            floatingActionButton = {
+                BasicFAB(available) {
+                    onUiAction(IconSelectViewModel.CreateCustomIcon)
+                }
+            }
+        ) {
+            PackageInfoLazyColumn(infos, onUiAction)
+        }
     }
 
     @Composable
@@ -104,14 +119,27 @@ class IconSelectActivity : BaseActivity() {
         )
         val appName: String = info.name
         val isSelected: Boolean = info.isSelected
-        ConstraintLayout(
+        PackageInfoRowInner(
+            appName = appName,
+            isSelected = isSelected,
+            painter = painter,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp)
-                .clickable {
-                    onClick(IconSelectViewModel.Select(index, !isSelected))
-                },
         ) {
+            onClick(IconSelectViewModel.Select(index, !isSelected))
+        }
+    }
+
+    @Composable
+    private fun PackageInfoRowInner(
+        appName: String,
+        isSelected: Boolean,
+        painter: ImagePainter,
+        modifier: Modifier = Modifier,
+        onClick: () -> Unit = {}
+    ) {
+        ConstraintLayout(modifier = modifier.clickable(onClick = onClick)) {
             val (icon, name, check) = createRefs()
             Image(
                 painter = painter,
@@ -145,9 +173,7 @@ class IconSelectActivity : BaseActivity() {
             )
             RadioButton(
                 selected = isSelected,
-                onClick = {
-                    onClick(IconSelectViewModel.Select(index, !isSelected))
-                },
+                onClick = onClick,
                 modifier = Modifier
                     .wrapContentSize()
                     .constrainAs(check) {
@@ -165,7 +191,7 @@ class IconSelectActivity : BaseActivity() {
     private fun IconSelectActivityPreview() {
         CustomIconHelperXBasicTheme {
             val list = listOf(InstalledAppInfo(null, "madderate", true))
-            MainContentInner(list) {}
+            MainContentInner(false, list) {}
         }
     }
 }
