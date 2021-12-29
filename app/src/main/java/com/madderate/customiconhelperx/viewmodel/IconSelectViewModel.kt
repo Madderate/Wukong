@@ -9,11 +9,17 @@ import com.madderate.customiconhelperx.base.BaseViewModel
 import com.madderate.customiconhelperx.model.InstalledAppInfo
 import com.madderate.customiconhelperx.utils.LogUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class IconSelectViewModel(application: Application) :
-    BaseViewModel<SnapshotStateList<InstalledAppInfo>>(application) {
+class IconSelectViewModel(
+    application: Application
+) : BaseViewModel<SnapshotStateList<InstalledAppInfo>>(application) {
+    private val _hasAppSelected = MutableStateFlow(false)
+    val hasAppSelected: StateFlow<Boolean> = _hasAppSelected
+
     init {
         viewModelScope.launch {
             val packageManager = application.packageManager
@@ -35,22 +41,26 @@ class IconSelectViewModel(application: Application) :
                 }
             }
         }.onSuccess { infos ->
-            mutableUiState.value =
-                mutableUiState.value.copy(isLoading = false, result = infos.toMutableStateList())
+            val result = infos.toMutableStateList()
+            mutableUiState.value = mutableUiState.value.copy(false, result, null)
         }.onFailure {
             LogUtils.e("Error occured when try to get packages...", it)
-            mutableUiState.value = mutableUiState.value.copy(isLoading = false, result = null, error = it)
+            mutableUiState.value = mutableUiState.value.copy(false, null, it)
         }
 
     fun onUiAction(action: IconSelectUiAction) {
-        when (action) {
-            is Select -> {
-                val list =  mutableUiState.value.result ?: return
-                val i = action.position
-                kotlin.runCatching {
-                    list[i] = list[i].apply { isSelected = action.shouldSelect }
-                }
-            }
+        if (action is Select) {
+            updateSelectState(action.position, action.shouldSelect)
+            return
+        }
+    }
+
+    private fun updateSelectState(position: Int, shouldSelect: Boolean) {
+        val oldUiState = mutableUiState.value.current
+        if (oldUiState !is UiState.Success) return
+        val list = oldUiState.result.takeIf { it.isNotEmpty() } ?: return
+        kotlin.runCatching {
+            list[position] = list[position].apply { isSelected = shouldSelect }
         }
     }
 

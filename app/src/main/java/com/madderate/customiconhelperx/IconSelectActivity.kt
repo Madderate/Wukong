@@ -9,15 +9,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.Checkbox
-import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.RadioButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,8 +29,10 @@ import com.madderate.customiconhelperx.model.InstalledAppInfo
 import com.madderate.customiconhelperx.ui.theme.CustomIconHelperXBasicTheme
 import com.madderate.customiconhelperx.ui.views.BasicFAB
 import com.madderate.customiconhelperx.ui.views.BasicTopAppBars
-import com.madderate.customiconhelperx.ui.views.ErrorIcon
+import com.madderate.customiconhelperx.ui.views.ErrorUi
+import com.madderate.customiconhelperx.ui.views.LoadingUi
 import com.madderate.customiconhelperx.viewmodel.IconSelectViewModel
+import com.madderate.customiconhelperx.viewmodel.UiState
 
 class IconSelectActivity : BaseActivity() {
     companion object {
@@ -54,41 +55,13 @@ class IconSelectActivity : BaseActivity() {
     @Composable
     private fun MainContent(vm: IconSelectViewModel) {
         val uiState by vm.uiState.collectAsState()
-        val infos = uiState.result
-        if (uiState.isLoading) {
-            // loading
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) { CircularProgressIndicator() }
-            return
-        }
-        if (!uiState.isLoading && !infos.isNullOrEmpty()) {
-            // successfully loaded
-            MainContentInner(infos, vm::onUiAction)
-            return
-        }
-        // load error
-        val errMsg = uiState.error?.message
-            ?: stringResource(id = R.string.default_error_msg)
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            ErrorIcon(modifier = Modifier.size(48.dp))
-            Text(
-                text = errMsg,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 16.dp),
-                textAlign = TextAlign.Center,
-                overflow = TextOverflow.Ellipsis,
-                maxLines = 3
-            )
+        when (val current = uiState.current) {
+            is UiState.Error ->
+                ErrorUi(errMsg = current.errMsg)
+            is UiState.Loading ->
+                LoadingUi()
+            is UiState.Success ->
+                MainContentInner(current.result, vm::onUiAction)
         }
     }
 
@@ -130,12 +103,13 @@ class IconSelectActivity : BaseActivity() {
             }
         )
         val appName: String = info.name
+        val isSelected: Boolean = info.isSelected
         ConstraintLayout(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp)
                 .clickable {
-                    onClick(IconSelectViewModel.Select(index, !info.isSelected))
+                    onClick(IconSelectViewModel.Select(index, !isSelected))
                 },
         ) {
             val (icon, name, check) = createRefs()
@@ -169,10 +143,10 @@ class IconSelectActivity : BaseActivity() {
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Start
             )
-            Checkbox(
-                checked = info.isSelected,
-                onCheckedChange = { checked ->
-                    onClick(IconSelectViewModel.Select(index, checked))
+            RadioButton(
+                selected = isSelected,
+                onClick = {
+                    onClick(IconSelectViewModel.Select(index, !isSelected))
                 },
                 modifier = Modifier
                     .wrapContentSize()

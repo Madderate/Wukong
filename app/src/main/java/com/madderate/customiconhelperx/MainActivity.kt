@@ -27,7 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.madderate.customiconhelperx.base.BaseActivity
 import com.madderate.customiconhelperx.ui.theme.CustomIconHelperXBasicTheme
+import com.madderate.customiconhelperx.ui.views.ErrorUi
+import com.madderate.customiconhelperx.ui.views.LoadingUi
 import com.madderate.customiconhelperx.viewmodel.MainViewModel
+import com.madderate.customiconhelperx.viewmodel.UiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -49,15 +52,22 @@ class MainActivity : BaseActivity() {
     private fun MainContent(vm: MainViewModel = viewModel()) {
         val uiState by vm.uiState.collectAsState()
         val snackbarHostState = remember { SnackbarHostState() }
-        UserInterfaceArea(
-            userInput = uiState.result?.searchKeyword ?: "",
-            index = uiState.result?.index ?: 0,
-            bitmap = uiState.result?.bitmap,
-            onUiAction = vm::onUiAction,
-            onUiNav = vm::onUiNav,
-            snackbarHostState = snackbarHostState,
-            modifier = Modifier.fillMaxSize()
-        )
+        when (val current = uiState.current) {
+            is UiState.Error ->
+                ErrorUi(errMsg = current.errMsg)
+            is UiState.Loading ->
+                LoadingUi()
+            is UiState.Success ->
+                UserInterfaceArea(
+                    userInput = current.result.searchKeyword,
+                    index = current.result.index,
+                    bitmap = current.result.bitmap,
+                    onUiAction = vm::onUiAction,
+                    onUiNav = vm::onUiNav,
+                    snackbarHostState = snackbarHostState,
+                    modifier = Modifier.fillMaxSize()
+                )
+        }
         SnackbarArea(snackbarHostState = snackbarHostState)
     }
 

@@ -13,23 +13,31 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.max
 
-class MainViewModel(application: Application) : BaseViewModel<MainResult>(application) {
+class MainViewModel(
+    application: Application
+) : BaseViewModel<MainResult>(application) {
     private val mImageUrls = listOf(
         "https://c-ssl.duitang.com/uploads/blog/202110/30/20211030023858_db819.jpg",
         "https://c-ssl.duitang.com/uploads/blog/202110/30/20211030023859_1cda2.thumb.1000_0.jpg_webp",
         "https://c-ssl.duitang.com/uploads/blog/202110/30/20211030023900_2326a.thumb.1000_0.jpg_webp"
     )
 
+    init {
+        mutableUiState.value = UiState(isLoading = false, result = MainResult(), error = null)
+    }
+
     fun onUiAction(uiAction: MainUiAction) {
+        val latest = mutableUiState.value.current
+        if (latest !is UiState.Success) return
         when (uiAction) {
             is Increase -> {
                 val count = uiAction.count
-                val value = mutableUiState.value.result.copyEvenNull(index = count)
+                val value = latest.result.copyEvenNull(index = count)
                 mutableUiState.value = mutableUiState.value.copy(isLoading = false, value)
             }
             is Search -> {
                 val keyword = uiAction.keyword
-                val value = mutableUiState.value.result.copyEvenNull(searchKeyword = keyword)
+                val value = latest.result.copyEvenNull(searchKeyword = keyword)
                 mutableUiState.value = mutableUiState.value.copy(isLoading = false, value)
             }
             is UpdateImage -> viewModelScope.launch(Dispatchers.IO) {
@@ -38,7 +46,7 @@ class MainViewModel(application: Application) : BaseViewModel<MainResult>(applic
                     val url = mImageUrls.random()
                     Glide.with(context).asBitmap().load(url).submit().get()!!
                 }.onSuccess {
-                    val value = mutableUiState.value.result.copyEvenNull(bitmap = it)
+                    val value = latest.result.copyEvenNull(bitmap = it)
                     mutableUiState.value = mutableUiState.value.copy(isLoading = false, value)
                 }
             }
