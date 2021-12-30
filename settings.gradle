@@ -5,6 +5,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "CustomIconHelperX"
+rootProject.name = "CustomShortcutHelperX"
 include ':app'
-include ':custom_icon_helper_x'
+include ':custom_shortcut_helper_x'
