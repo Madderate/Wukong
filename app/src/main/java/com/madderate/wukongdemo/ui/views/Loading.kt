@@ -10,9 +10,9 @@ import androidx.compose.ui.Modifier
 
 
 @Composable
-fun LoadingUi() {
+fun LoadingUi(modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) { CircularProgressIndicator() }

@@ -5,16 +5,19 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Scaffold
+import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -29,6 +32,7 @@ import coil.compose.rememberImagePainter
 import com.madderate.wukong.model.CustomShortcutInfo
 import com.madderate.wukongdemo.base.BaseActivity
 import com.madderate.wukongdemo.model.InstalledAppInfo
+import com.madderate.wukongdemo.ui.theme.LoadingBackground
 import com.madderate.wukongdemo.ui.theme.WukongBasicTheme
 import com.madderate.wukongdemo.ui.views.BasicFAB
 import com.madderate.wukongdemo.ui.views.BasicTopAppBars
@@ -36,6 +40,7 @@ import com.madderate.wukongdemo.ui.views.ErrorUi
 import com.madderate.wukongdemo.ui.views.LoadingUi
 import com.madderate.wukongdemo.viewmodel.IconSelectViewModel
 import com.madderate.wukongdemo.viewmodel.UiState
+import kotlinx.coroutines.launch
 
 class IconSelectActivity : BaseActivity() {
     companion object {
@@ -64,22 +69,27 @@ class IconSelectActivity : BaseActivity() {
                 ErrorUi(errMsg = current.errMsg)
             is UiState.Loading ->
                 LoadingUi()
-            is UiState.Success ->
+            is UiState.Success -> {
+                val info = current.result
                 MainContentInner(
-                    available = selectedIndex != IconSelectViewModel.DEFAULT_INDEX,
-                    infos = current.result,
+                    shortcuts = info.customShortcuts,
+                    pinShortcutState = info.pinShortCutState.value,
+                    selectedIndex = selectedIndex,
                     onUiAction = vm::onUiAction
                 )
+            }
         }
     }
 
     //region MainContent
     @Composable
     private fun MainContentInner(
-        available: Boolean,
-        infos: List<InstalledAppInfo>,
+        shortcuts: List<CustomShortcutInfo>,
+        pinShortcutState: InstalledAppInfo.PinShortcutState,
+        selectedIndex: Int,
         onUiAction: (IconSelectViewModel.IconSelectUiAction) -> Unit
     ) {
+        val available = selectedIndex != IconSelectViewModel.DEFAULT_INDEX
         Scaffold(
             topBar = {
                 BasicTopAppBars(stringRes = R.string.icon_select_page_title) {
@@ -90,27 +100,41 @@ class IconSelectActivity : BaseActivity() {
                 BasicFAB(available) {
                     onUiAction(IconSelectViewModel.CreateCustomIcon)
                 }
+            },
+            snackbarHost = { state ->
+                val msg: String = when (pinShortcutState) {
+                    is InstalledAppInfo.PinShortcutState.Success -> pinShortcutState.msg
+                    is InstalledAppInfo.PinShortcutState.Error -> pinShortcutState.msg
+                    else -> null
+                } ?: return@Scaffold
+                val scope = rememberCoroutineScope()
+                scope.launch {
+                    state.showSnackbar(msg, null, SnackbarDuration.Short)
+                }
             }
         ) {
-            PackageInfoLazyColumn(infos, onUiAction)
+            PackageInfoLazyColumn(shortcuts, selectedIndex, onUiAction)
+            if (pinShortcutState == InstalledAppInfo.PinShortcutState.Loading) {
+                LoadingUi(modifier = Modifier.background(LoadingBackground))
+            }
         }
     }
 
     @Composable
     private fun PackageInfoLazyColumn(
-        infos: List<InstalledAppInfo>,
+        shortcuts: List<CustomShortcutInfo>,
+        selectedIndex: Int,
         onUiAction: (IconSelectViewModel.IconSelectUiAction) -> Unit
     ) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            itemsIndexed(infos) { i, info ->
-                val shortcut = info.customShortcut
+            itemsIndexed(shortcuts) { i, shortcut ->
                 val name = shortcut.targetShortcutName
                 val icon: Any? = when (val iconType = shortcut.iconType) {
                     is CustomShortcutInfo.BitmapIcon -> iconType.bitmap
                     is CustomShortcutInfo.DrawableIcon -> iconType.drawable
                     CustomShortcutInfo.EmptyIcon -> null
                 }
-                val isSelected = info.isSelected.value
+                val isSelected = i == selectedIndex
                 PackageInfoRow(i, name, icon, isSelected, onUiAction)
             }
         }
@@ -210,10 +234,8 @@ class IconSelectActivity : BaseActivity() {
                 targetActivityPackageName = "com.madderate.wukongdemo",
                 targetActivityClzName = "IconSelectActivity"
             )
-            val list = listOf(InstalledAppInfo(customShortcut).apply {
-                isSelected.value = true
-            })
-            MainContentInner(false, list) {}
+            val list = listOf(customShortcut)
+            MainContentInner(list, InstalledAppInfo.PinShortcutState.Idle, 0) {}
         }
     }
 }
