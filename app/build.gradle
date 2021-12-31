@@ -7,7 +7,7 @@ android {
     compileSdk 31
 
     defaultConfig {
-        applicationId "com.madderate.wukong"
+        applicationId "com.madderate.wukongdemo"
         minSdk min_sdk_version
         targetSdk target_sdk_version
         versionCode version_code

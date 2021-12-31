@@ -17,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,6 +26,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import coil.compose.ImagePainter
 import coil.compose.rememberImagePainter
+import com.madderate.wukong.model.CustomShortcutInfo
 import com.madderate.wukongdemo.base.BaseActivity
 import com.madderate.wukongdemo.model.InstalledAppInfo
 import com.madderate.wukongdemo.ui.theme.WukongBasicTheme
@@ -100,25 +102,36 @@ class IconSelectActivity : BaseActivity() {
         onUiAction: (IconSelectViewModel.IconSelectUiAction) -> Unit
     ) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            itemsIndexed(infos) { i, info -> PackageInfoRow(i, info, onUiAction) }
+            itemsIndexed(infos) { i, info ->
+                val shortcut = info.customShortcut
+                val name = shortcut.targetShortcutName
+                val icon: Any? = when (val iconType = shortcut.iconType) {
+                    is CustomShortcutInfo.BitmapIcon -> iconType.bitmap
+                    is CustomShortcutInfo.DrawableIcon -> iconType.drawable
+                    CustomShortcutInfo.EmptyIcon -> null
+                }
+                val isSelected = info.isSelected.value
+                PackageInfoRow(i, name, icon, isSelected, onUiAction)
+            }
         }
     }
 
     @Composable
     private fun PackageInfoRow(
         index: Int,
-        info: InstalledAppInfo,
+        name: String,
+        icon: Any?,
+        isSelected: Boolean,
         onClick: (IconSelectViewModel.IconSelectUiAction) -> Unit
     ) {
         val painter = rememberImagePainter(
-            data = info.iconDrawable,
+            data = icon,
             builder = {
-                placeholder(R.drawable.placeholder)
-                    .error(R.drawable.placeholder)
+                placeholder(R.drawable.wukong_placeholder)
+                    .error(R.drawable.wukong_placeholder)
             }
         )
-        val appName: String = info.name
-        val isSelected: Boolean = info.isSelected
+        val appName: String = name
         PackageInfoRowInner(
             appName = appName,
             isSelected = isSelected,
@@ -190,9 +203,15 @@ class IconSelectActivity : BaseActivity() {
     @Composable
     private fun IconSelectActivityPreview() {
         WukongBasicTheme {
-            val list = listOf(InstalledAppInfo(null).apply {
-                name = "madderate"
-                isSelected = true
+            val customShortcut = CustomShortcutInfo(
+                iconType = CustomShortcutInfo.EmptyIcon,
+                targetPackageName = "com.madderate.wukongdemo",
+                targetShortcutName = stringResource(id = R.string.app_name),
+                targetActivityPackageName = "com.madderate.wukongdemo",
+                targetActivityClzName = "IconSelectActivity"
+            )
+            val list = listOf(InstalledAppInfo(customShortcut).apply {
+                isSelected.value = true
             })
             MainContentInner(false, list) {}
         }

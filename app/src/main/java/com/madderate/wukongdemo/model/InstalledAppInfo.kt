@@ -1,14 +1,8 @@
 package com.madderate.wukongdemo.model
 
-import android.content.Intent
-import android.graphics.drawable.Drawable
-import com.madderate.wukongdemo.R
-import com.madderate.wukongdemo.base.BaseApplication
+import androidx.compose.runtime.mutableStateOf
+import com.madderate.wukong.model.CustomShortcutInfo
 
-data class InstalledAppInfo(
-    val iconDrawable: Drawable?,
-) {
-    var isSelected: Boolean = false
-    var name: String = BaseApplication.appContext.getString(R.string.default_installed_app_name)
-    var launchIntent: Intent? = null
+data class InstalledAppInfo(val customShortcut: CustomShortcutInfo) {
+    var isSelected = mutableStateOf(false)
 }

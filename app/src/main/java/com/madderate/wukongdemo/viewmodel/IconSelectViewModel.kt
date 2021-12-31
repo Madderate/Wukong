@@ -1,7 +1,6 @@
 package com.madderate.wukongdemo.viewmodel
 
 import android.app.Application
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,18 +9,16 @@ import android.graphics.Bitmap
 import android.os.Build
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
-import androidx.core.content.pm.ShortcutInfoCompat
-import androidx.core.content.pm.ShortcutManagerCompat
-import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
-import androidx.core.os.bundleOf
 import androidx.lifecycle.viewModelScope
 import coil.imageLoader
 import coil.request.ImageRequest
 import com.bumptech.glide.load.engine.GlideException
+import com.madderate.wukong.Wukong
+import com.madderate.wukong.model.CustomShortcutInfo
+import com.madderate.wukong.utils.WukongLog
 import com.madderate.wukongdemo.base.BaseViewModel
 import com.madderate.wukongdemo.model.InstalledAppInfo
-import com.madderate.wukong.utils.WukongLog
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,7 +62,7 @@ class IconSelectViewModel(
                         PackageManager.MATCH_ALL
                     else 0
                 packageManager.queryIntentActivities(queryIntent, flag)
-                    .mapNotNull { mapResolveInfoToInstalledAppInfo(packageManager, it) }
+                    .mapNotNull { mapToInstalledAppInfo(packageManager, it) }
             }
         }.onSuccess { infos ->
             val result = infos.toMutableStateList()
@@ -75,24 +72,28 @@ class IconSelectViewModel(
             mutableUiState.value = mutableUiState.value.copy(false, null, it)
         }
 
-    private fun mapResolveInfoToInstalledAppInfo(
+    private fun mapToInstalledAppInfo(
         packageManager: PackageManager,
         resolveInfo: ResolveInfo?
-    ): InstalledAppInfo? {
-        val activityInfo = resolveInfo?.activityInfo ?: return null
-        val activityPackageName = activityInfo.packageName ?: return null
-        val activityClzName = activityInfo.name ?: return null
-        val appName = activityInfo.applicationInfo?.loadLabel(packageManager)
-        val appIconDrawable = activityInfo.applicationInfo?.loadIcon(packageManager)
-        val launchIntent = Intent(Intent.ACTION_MAIN)
-            .addCategory(Intent.CATEGORY_LAUNCHER)
-            .setComponent(ComponentName(activityPackageName, activityClzName))
-            .setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
-            .addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY)
-        return InstalledAppInfo(appIconDrawable).apply {
-            if (!appName.isNullOrBlank()) this.name = appName.toString()
-            this.launchIntent = launchIntent
-        }
+    ): InstalledAppInfo? = try {
+        val activityInfo = resolveInfo?.activityInfo!!
+        val activityPackageName = activityInfo.packageName!!
+        val activityClzName = activityInfo.name!!
+        val appInfo = activityInfo.applicationInfo!!
+        val appName = appInfo.loadLabel(packageManager)
+        val appPackageName = appInfo.packageName!!
+        val appIconDrawable = appInfo.loadIcon(packageManager)!!
+        val customShortcut = CustomShortcutInfo(
+            iconType = CustomShortcutInfo.DrawableIcon(appIconDrawable),
+            targetPackageName = appPackageName,
+            targetShortcutName = appName.toString(),
+            targetActivityPackageName = activityPackageName,
+            targetActivityClzName = activityClzName
+        )
+        InstalledAppInfo(customShortcut)
+    } catch (e: Exception) {
+        WukongLog.e("Error occured when try to map resolveInfo to customShortcutInfo.", e)
+        null
     }
 
     fun onUiAction(action: IconSelectUiAction) {
@@ -132,23 +133,13 @@ class IconSelectViewModel(
 
     private suspend fun requestPinShortcuts(
         context: Context,
-        iconBmp: Bitmap?,
+        bitmap: Bitmap,
         info: InstalledAppInfo
     ) = withContext(Dispatchers.Main) {
         try {
-            val bundle = bundleOf(
-                "type" to IconCompat.TYPE_BITMAP,
-                "obj" to iconBmp
-            )
-            val icon = IconCompat.createFromBundle(bundle)
-            val shortcutId = UUID.randomUUID().toString()
-            val shortcutInfo = ShortcutInfoCompat.Builder(context, shortcutId)
-                .setShortLabel(info.name)
-                .setIcon(icon)
-                .setLongLived(false)
-                .setIntent(info.launchIntent!!)
-                .build()
-            if (!ShortcutManagerCompat.requestPinShortcut(context, shortcutInfo, null))
+            val customShortcut = info.customShortcut
+                .apply { iconType = CustomShortcutInfo.BitmapIcon(bitmap) }
+            if (!Wukong.requestPinShortcut(context, customShortcut))
                 throw IllegalStateException("Can't pin shortcut to Launcher...")
         } catch (e: Exception) {
             WukongLog.e("Error occured when try to pin shortcut...", e)
@@ -156,21 +147,23 @@ class IconSelectViewModel(
     }
 
     private fun updateSelectItem(position: Int, shouldSelect: Boolean) {
-        val last = uiState.value.current
-        if (last !is UiState.Success) return
-        val lastI = selectedIndex.value
-        val lastL = last.result.takeIf { it.isNotEmpty() } ?: return
+        val latest = uiState.value.current
+        if (latest !is UiState.Success) return
+        val latestI = selectedIndex.value
+        val latestL = latest.result.takeIf { it.isNotEmpty() } ?: return
         // revert last selected
         kotlin.runCatching {
-            WukongLog.d("last selected: $lastI")
-            if (lastI != position)
-                lastL[lastI] = lastL[lastI].apply { this.isSelected = !this.isSelected }
+            WukongLog.d("last selected: $latestI")
+            if (latestI != position) {
+                val oldValue = latestL[latestI].isSelected.value
+                latestL[latestI].isSelected.value = !oldValue
+            }
         }.onFailure {
             WukongLog.e("Error occured when revert last selected.", it)
         }
         // update current selected && selectedIndex
         kotlin.runCatching {
-            lastL[position] = lastL[position].apply { isSelected = shouldSelect }
+            latestL[position].isSelected.value = shouldSelect
             if (shouldSelect) {
                 _selectedIndex.value = position
             } else _selectedIndex.value = DEFAULT_INDEX

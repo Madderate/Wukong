@@ -27,7 +27,7 @@ class MainViewModel(
     }
 
     fun onUiAction(uiAction: MainUiAction) {
-        val latest = mutableUiState.value.current
+        val latest = uiState.value.current
         if (latest !is UiState.Success) return
         when (uiAction) {
             is Increase -> {
