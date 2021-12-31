@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">自定义图标助手X</string>
+    <string name="app_name">悟空</string>
+
     <string name="add">添加</string>
     <string name="done">完成</string>
     <string name="back">返回</string>

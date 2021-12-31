@@ -7,7 +7,7 @@ android {
     compileSdk 31
 
     defaultConfig {
-        applicationId "com.madderate.customshortcuthelperx"
+        applicationId "com.madderate.wukong"
         minSdk min_sdk_version
         targetSdk target_sdk_version
         versionCode version_code
@@ -79,4 +79,6 @@ dependencies {
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation "androidx.test.ext:junit:$test_junit_implementation_version"
     androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_version"
+
+    implementation project(':wukong')
 }

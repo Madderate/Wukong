@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.madderate.customshortcuthelperx">
+    package="com.madderate.wukongdemo">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:name="com.madderate.customshortcuthelperx.base.BaseApplication"
+        android:name="com.madderate.wukongdemo.base.BaseApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.CustomShortcutHelperX">
+        android:theme="@style/Theme.Wukong">
         <activity
-            android:name="com.madderate.customshortcuthelperx.MainActivity"
+            android:name="com.madderate.wukongdemo.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.CustomShortcutHelperX.NoActionBar">
+            android:theme="@style/Theme.Wukong.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -25,10 +25,10 @@
         </activity>
 
         <activity
-            android:name="com.madderate.customshortcuthelperx.IconSelectActivity"
+            android:name="com.madderate.wukongdemo.IconSelectActivity"
             android:exported="false"
             android:label="@string/label_icon_select"
-            android:theme="@style/Theme.CustomShortcutHelperX.NoActionBar" />
+            android:theme="@style/Theme.Wukong.NoActionBar" />
     </application>
 
 </manifest>

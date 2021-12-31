@@ -1,4 +1,4 @@
-# CustomShortcutHelperX
+# Wukong (**悟空** in Chinese)
 
 If you have trouble pinning your custom shortcut to Launcher dynamically, try this library!
 
