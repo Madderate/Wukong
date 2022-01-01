@@ -3,8 +3,10 @@ package com.madderate.wukongdemo.viewmodel
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewModelScope
-import com.bumptech.glide.Glide
+import coil.imageLoader
+import coil.request.ImageRequest
 import com.madderate.wukongdemo.IconSelectActivity
 import com.madderate.wukongdemo.base.BaseActivity
 import com.madderate.wukongdemo.base.BaseViewModel
@@ -44,7 +46,8 @@ class MainViewModel(
                 kotlin.runCatching {
                     val context = getApplication() as Context
                     val url = mImageUrls.random()
-                    Glide.with(context).asBitmap().load(url).submit().get()!!
+                    val request = ImageRequest.Builder(context).data(url).build()
+                    context.imageLoader.execute(request).drawable!!.toBitmap()
                 }.onSuccess {
                     val value = latest.result.copyEvenNull(bitmap = it)
                     mutableUiState.value = mutableUiState.value.copy(isLoading = false, value)

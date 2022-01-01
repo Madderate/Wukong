@@ -13,15 +13,28 @@ import com.madderate.wukong.R
 import java.util.*
 
 data class CustomShortcutInfo(
-    /**
-     * Main shortcut icon, display at the center of the shortcut.
-     */
-    var iconType: IconType,
-
+    val appShortcutIconDrawable: Drawable?,
     /**
      * The package name of target app
      */
     val targetPackageName: String,
+
+    val targetActivityPackageName: String,
+    val targetActivityClzName: String,
+
+    val targetAction: String = Intent.ACTION_MAIN,
+    val targetCategory: String = Intent.CATEGORY_DEFAULT,
+
+    /**
+     * Badge in shortcut, often display at the right-bottom corner of the shortcut.
+     */
+    val badgeType: BadgeType? = null
+) {
+
+    /**
+     * Main shortcut icon, display at the center of the shortcut.
+     */
+    var customIconType: IconType = EmptyIcon
 
     /**
      * The shortcut name of target app,
@@ -31,24 +44,13 @@ data class CustomShortcutInfo(
      * access [packageItemInfo.loadLabel()][android.content.pm.PackageItemInfo.loadLabel]
      *
      */
-    var targetShortcutName: String,
-
-    val targetActivityPackageName: String,
-    val targetActivityClzName: String,
-
-    val targetAction: String = Intent.ACTION_MAIN,
-    val targetCategory: String = Intent.CATEGORY_LAUNCHER,
-
-    /**
-     * Badge in shortcut, often display at the right-bottom corner of the shortcut.
-     */
-    val badgeType: BadgeType? = null,
+    var customShortcutName: String = ""
 
     /**
      * Whether shortcut can be created repeatly.
      */
-    val duplicatable: Boolean = false,
-) {
+    var duplicatable: Boolean = false
+
     /**
      * Flags for activity's launchMode when user click the custom shortcut.
      */
@@ -56,15 +58,15 @@ data class CustomShortcutInfo(
         Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
 
     /**
-     * [Icon] created with [iconType].
+     * [Icon] created with [customIconType].
      */
     @RequiresApi(25)
     private fun getIcon(context: Context): Icon {
-        return when (iconType) {
+        return when (customIconType) {
             is BitmapIcon ->
-                Icon.createWithBitmap((iconType as BitmapIcon).bitmap)
+                Icon.createWithBitmap((customIconType as BitmapIcon).bitmap)
             is DrawableIcon ->
-                Icon.createWithBitmap((iconType as DrawableIcon).drawable.toBitmap())
+                Icon.createWithBitmap((customIconType as DrawableIcon).drawable.toBitmap())
             EmptyIcon -> Icon.createWithResource(context, R.drawable.wukong_placeholder)
         }
     }
@@ -106,7 +108,7 @@ data class CustomShortcutInfo(
     fun toShortcutInfo(context: Context): ShortcutInfo {
         val id = UUID.randomUUID().toString()
         return ShortcutInfo.Builder(context, id)
-            .setShortLabel(targetShortcutName)
+            .setShortLabel(customShortcutName)
             .setIntents(intents!!.toTypedArray())
             .setIcon(getIcon(context))
             .build()

@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import com.madderate.wukong.model.CustomShortcutInfo
 
 data class InstalledAppInfo(val customShortcuts: List<CustomShortcutInfo>) {
-    var pinShortCutState: MutableState<PinShortcutState> = mutableStateOf(PinShortcutState.Idle)
+    val pinShortCutState: MutableState<PinShortcutState> = mutableStateOf(PinShortcutState.Idle)
 
     sealed interface PinShortcutState {
         object Idle : PinShortcutState

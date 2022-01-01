@@ -10,7 +10,6 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewModelScope
 import coil.imageLoader
 import coil.request.ImageRequest
-import com.bumptech.glide.load.engine.GlideException
 import com.madderate.wukong.Wukong
 import com.madderate.wukong.model.CustomShortcutInfo
 import com.madderate.wukong.utils.WukongLog
@@ -81,12 +80,13 @@ class IconSelectViewModel(
         val appPackageName = appInfo.packageName!!
         val appIconDrawable = appInfo.loadIcon(packageManager)!!
         CustomShortcutInfo(
-            iconType = CustomShortcutInfo.DrawableIcon(appIconDrawable),
+            appShortcutIconDrawable = appIconDrawable,
             targetPackageName = appPackageName,
-            targetShortcutName = appName.toString(),
             targetActivityPackageName = activityPackageName,
             targetActivityClzName = activityClzName
-        )
+        ).apply {
+            customShortcutName = appName.toString()
+        }
     } catch (e: Exception) {
         WukongLog.e("Error occured when try to map resolveInfo to customShortcutInfo.", e)
         null
@@ -98,6 +98,9 @@ class IconSelectViewModel(
                 createCustomIcon(selectedIndex.value)
             is Select ->
                 updateSelectItem(action.position, action.shouldSelect)
+            ResetPinShortcutState ->
+                (uiState.value.current as? UiState.Success)?.result?.pinShortCutState?.value =
+                    InstalledAppInfo.PinShortcutState.Idle
         }
     }
 
@@ -109,27 +112,26 @@ class IconSelectViewModel(
             current.runCatching {
                 val infos = result.customShortcuts
                 val info = infos[index]
-                val context = getApplication() as Context
                 // TODO: 2021/12/30 This is just a test icon image...
-                val request = ImageRequest.Builder(context)
-                    .data(mIconImgUrl)
-                    .build()
+                val context = getApplication() as Context
+                val request = ImageRequest.Builder(context).data(mIconImgUrl).build()
                 val bitmap = context.imageLoader.execute(request).drawable?.toBitmap()!!
-                info.iconType = CustomShortcutInfo.BitmapIcon(bitmap)
-                if (!Wukong.requestPinShortcut(context, info))
+                info.apply {
+                    customIconType = CustomShortcutInfo.BitmapIcon(bitmap)
+                    duplicatable = true
+                }
+                if (withContext(Dispatchers.Main) { !Wukong.requestPinShortcut(context, info) })
                     throw IllegalStateException("Can't pin shortcut to Launcher...")
-
             }.onSuccess {
                 current.result.pinShortCutState.value =
                     InstalledAppInfo.PinShortcutState.Success("设置成功！")
             }.onFailure {
                 // Maybe IOBE...
-                // Or GlideException
+                val clzName = it::class.simpleName
+                val exceptionMsg = it.message
                 current.result.pinShortCutState.value =
-                    InstalledAppInfo.PinShortcutState.Error(it, "出现错误 ${it.message}")
-                if (it is GlideException)
-                    it.logRootCauses(WukongLog.TAG)
-                else WukongLog.e("Error occured when try to get InstalledAppInfo...", it)
+                    InstalledAppInfo.PinShortcutState.Error(it, "出现错误 $clzName: $exceptionMsg")
+                WukongLog.e("Error occured when try to get InstalledAppInfo...", it)
             }
         }
     }
@@ -141,4 +143,5 @@ class IconSelectViewModel(
     sealed interface IconSelectUiAction
     class Select(val position: Int, val shouldSelect: Boolean) : IconSelectUiAction
     object CreateCustomIcon : IconSelectUiAction
+    object ResetPinShortcutState : IconSelectUiAction
 }

@@ -19,6 +19,7 @@ object Wukong {
         "com.android.launcher.action.INSTALL_SHORTCUT"
     private const val INSTALL_SHORTCUT_PERMISSION =
         "com.android.launcher.permission.INSTALL_SHORTCUT"
+    private const val EXTRA_DUPLICATE = "duplicate"
 
     @JvmStatic
     fun isRequestPinShortcutSupported(context: Context): Boolean {
@@ -55,18 +56,17 @@ object Wukong {
         if (!isRequestPinShortcutSupported(context)) return false
 
         try {
-            val launchIntent = shortcut.intents?.last() ?: return false
-            val shortcutBmp: Bitmap? = when (val iconType = shortcut.iconType) {
+            val launchIntent = shortcut.intents?.last()!!
+            val shortcutBmp: Bitmap? = when (val iconType = shortcut.customIconType) {
                 is CustomShortcutInfo.BitmapIcon -> iconType.bitmap
                 is CustomShortcutInfo.DrawableIcon -> iconType.drawable.toBitmap()
                 CustomShortcutInfo.EmptyIcon -> null
-            }
+            }!!
             val broadcastIntent = Intent(ACTION_INSTALL_SHORTCUT)
+                .putExtra(EXTRA_DUPLICATE, shortcut.duplicatable)
+                .putExtra(Intent.EXTRA_SHORTCUT_NAME, shortcut.customShortcutName)
+                .putExtra(Intent.EXTRA_SHORTCUT_ICON, shortcutBmp)
                 .putExtra(Intent.EXTRA_SHORTCUT_INTENT, launchIntent)
-                .putExtra(Intent.EXTRA_SHORTCUT_NAME, shortcut.targetShortcutName)
-            if (shortcutBmp != null && !shortcutBmp.isRecycled) {
-                broadcastIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON, shortcutBmp)
-            }
             if (callback == null) {
                 context.sendBroadcast(broadcastIntent)
                 return true
