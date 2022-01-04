@@ -16,8 +16,6 @@ import com.madderate.wukong.utils.WukongLog
 import com.madderate.wukongdemo.base.BaseViewModel
 import com.madderate.wukongdemo.model.InstalledAppInfo
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import java.util.*
 
 class IconSelectViewModel(
@@ -26,9 +24,6 @@ class IconSelectViewModel(
     companion object {
         const val DEFAULT_INDEX = -1
     }
-
-    private val _selectedIndex = MutableStateFlow(DEFAULT_INDEX)
-    val selectedIndex: StateFlow<Int> = _selectedIndex
 
     private val mDownloadJob = Job() + Dispatchers.IO
     private val mLoadingLocalJob = Job() + Dispatchers.Default
@@ -95,7 +90,7 @@ class IconSelectViewModel(
     fun onUiAction(action: IconSelectUiAction) {
         when (action) {
             CreateCustomIcon ->
-                createCustomIcon(selectedIndex.value)
+                createCustomIcon()
             is Select ->
                 updateSelectItem(action.position, action.shouldSelect)
             ResetPinShortcutState ->
@@ -104,10 +99,11 @@ class IconSelectViewModel(
         }
     }
 
-    private fun createCustomIcon(index: Int) {
+    private fun createCustomIcon() {
         val current = uiState.value.current
         if (current !is UiState.Success) return
         current.result.pinShortCutState.value = InstalledAppInfo.PinShortcutState.Loading
+        val index = current.result.selectedIndex.value
         viewModelScope.launch(mDownloadJob) {
             current.runCatching {
                 val infos = result.customShortcuts
@@ -137,7 +133,9 @@ class IconSelectViewModel(
     }
 
     private fun updateSelectItem(position: Int, shouldSelect: Boolean) {
-        _selectedIndex.value = if (shouldSelect) position else DEFAULT_INDEX
+        val current = uiState.value.current
+        if (current !is UiState.Success) return
+        current.result.selectedIndex.value = if (shouldSelect) position else DEFAULT_INDEX
     }
 
     sealed interface IconSelectUiAction

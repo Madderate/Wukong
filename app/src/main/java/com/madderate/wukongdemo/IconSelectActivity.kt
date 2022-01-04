@@ -61,7 +61,6 @@ class IconSelectActivity : BaseActivity() {
     @Composable
     private fun MainContent(vm: IconSelectViewModel) {
         val uiState by vm.uiState.collectAsState()
-        val selectedIndex by vm.selectedIndex.collectAsState()
         when (val current = uiState.current) {
             is UiState.Error ->
                 ErrorUi(errMsg = current.errMsg)
@@ -72,7 +71,7 @@ class IconSelectActivity : BaseActivity() {
                 MainContentInner(
                     shortcuts = info.customShortcuts,
                     pinShortcutState = info.pinShortCutState.value,
-                    selectedIndex = selectedIndex,
+                    selectedIndex = info.selectedIndex.value,
                     onUiAction = vm::onUiAction
                 )
             }

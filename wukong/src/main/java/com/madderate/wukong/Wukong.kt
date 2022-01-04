@@ -17,9 +17,10 @@ import com.madderate.wukong.utils.WukongLog
 object Wukong {
     private const val ACTION_INSTALL_SHORTCUT =
         "com.android.launcher.action.INSTALL_SHORTCUT"
-    private const val INSTALL_SHORTCUT_PERMISSION =
+    private const val PERMISSION_INSTALL_SHORTCUT =
         "com.android.launcher.permission.INSTALL_SHORTCUT"
-    private const val EXTRA_DUPLICATE = "duplicate"
+    private const val EXTRA_DUPLICATE =
+        "duplicate"
 
     @JvmStatic
     fun isRequestPinShortcutSupported(context: Context): Boolean {
@@ -31,7 +32,7 @@ object Wukong {
 
         // else we need to check whether shortcut permission has granted
         val permissionState =
-            ContextCompat.checkSelfPermission(context, INSTALL_SHORTCUT_PERMISSION)
+            ContextCompat.checkSelfPermission(context, PERMISSION_INSTALL_SHORTCUT)
         if (permissionState != PackageManager.PERMISSION_GRANTED)
             return false
         return true
@@ -56,6 +57,8 @@ object Wukong {
         if (!isRequestPinShortcutSupported(context)) return false
 
         try {
+            val appName = shortcut.customShortcutName
+            val duplicate = shortcut.duplicatable
             val launchIntent = shortcut.intents?.last()!!
             val shortcutBmp: Bitmap? = when (val iconType = shortcut.customIconType) {
                 is CustomShortcutInfo.BitmapIcon -> iconType.bitmap
@@ -63,8 +66,8 @@ object Wukong {
                 CustomShortcutInfo.EmptyIcon -> null
             }!!
             val broadcastIntent = Intent(ACTION_INSTALL_SHORTCUT)
-                .putExtra(EXTRA_DUPLICATE, shortcut.duplicatable)
-                .putExtra(Intent.EXTRA_SHORTCUT_NAME, shortcut.customShortcutName)
+                .putExtra(EXTRA_DUPLICATE, duplicate)
+                .putExtra(Intent.EXTRA_SHORTCUT_NAME, appName)
                 .putExtra(Intent.EXTRA_SHORTCUT_ICON, shortcutBmp)
                 .putExtra(Intent.EXTRA_SHORTCUT_INTENT, launchIntent)
             if (callback == null) {

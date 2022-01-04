@@ -6,7 +6,8 @@ import com.madderate.wukong.model.CustomShortcutInfo
 
 data class InstalledAppInfo(val customShortcuts: List<CustomShortcutInfo>) {
     val pinShortCutState: MutableState<PinShortcutState> = mutableStateOf(PinShortcutState.Idle)
-
+    val selectedIndex: MutableState<Int> = mutableStateOf(-1)
+    
     sealed interface PinShortcutState {
         object Idle : PinShortcutState
         object Loading : PinShortcutState
