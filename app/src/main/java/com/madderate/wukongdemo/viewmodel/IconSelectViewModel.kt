@@ -28,6 +28,7 @@ class IconSelectViewModel(
     private val mDownloadJob = Job() + Dispatchers.IO
     private val mLoadingLocalJob = Job() + Dispatchers.Default
 
+    // TODO: 2021/12/30 This is just a test icon image...
     private val mIconImgUrl =
         "https://c-ssl.duitang.com/uploads/ops/202110/22/20211022191052_99918.thumb.100_100_c.png_webp"
 
@@ -75,18 +76,19 @@ class IconSelectViewModel(
         val appPackageName = appInfo.packageName!!
         val appIconDrawable = appInfo.loadIcon(packageManager)!!
         CustomShortcutInfo(
-            appShortcutIconDrawable = appIconDrawable,
-            targetPackageName = appPackageName,
-            targetActivityPackageName = activityPackageName,
-            targetActivityClzName = activityClzName
-        ).apply {
-            customShortcutName = appName.toString()
-        }
+            originAppIconDrawable = appIconDrawable,
+            originAppName = appName,
+            packageName = appPackageName,
+            activityPkgName = activityPackageName,
+            activityClzName = activityClzName
+        )
     } catch (e: Exception) {
         WukongLog.e("Error occured when try to map resolveInfo to customShortcutInfo.", e)
         null
     }
 
+
+    //region UiAction
     fun onUiAction(action: IconSelectUiAction) {
         when (action) {
             CreateCustomIcon ->
@@ -103,31 +105,30 @@ class IconSelectViewModel(
         val current = uiState.value.current
         if (current !is UiState.Success) return
         current.result.pinShortCutState.value = InstalledAppInfo.PinShortcutState.Loading
-        val index = current.result.selectedIndex.value
+
         viewModelScope.launch(mDownloadJob) {
+            val context = getApplication() as Context
             current.runCatching {
-                val infos = result.customShortcuts
-                val info = infos[index]
-                // TODO: 2021/12/30 This is just a test icon image...
-                val context = getApplication() as Context
-                val request = ImageRequest.Builder(context).data(mIconImgUrl).build()
-                val bitmap = context.imageLoader.execute(request).drawable?.toBitmap()!!
-                info.apply {
-                    customIconType = CustomShortcutInfo.BitmapIcon(bitmap)
+                val index = result.selectedIndex.value
+                val imageRequest = ImageRequest.Builder(context)
+                    .data(mIconImgUrl)
+                    .build()
+                val info = result.customShortcuts[index].apply {
+                    customAppIconBmp =
+                        context.imageLoader.execute(imageRequest).drawable?.toBitmap()
                     duplicatable = true
                 }
-                if (withContext(Dispatchers.Main) { !Wukong.requestPinShortcut(context, info) })
-                    throw IllegalStateException("Can't pin shortcut to Launcher...")
+                val isPinned = Wukong.requestPinShortcut(context, info)
+                if (!isPinned)
+                    throw RuntimeException("Pin shortcut failed.")
             }.onSuccess {
                 current.result.pinShortCutState.value =
-                    InstalledAppInfo.PinShortcutState.Success("设置成功！")
-            }.onFailure {
-                // Maybe IOBE...
-                val clzName = it::class.simpleName
-                val exceptionMsg = it.message
+                    InstalledAppInfo.PinShortcutState.Success("快捷方式已固定")
+            }.onFailure { e ->
+                val eClzName = e.javaClass.simpleName
+                val eMsg = e.message
                 current.result.pinShortCutState.value =
-                    InstalledAppInfo.PinShortcutState.Error(it, "出现错误 $clzName: $exceptionMsg")
-                WukongLog.e("Error occured when try to get InstalledAppInfo...", it)
+                    InstalledAppInfo.PinShortcutState.Error(e, "固定快捷方式时发生错误 $eClzName: $eMsg")
             }
         }
     }
@@ -137,6 +138,7 @@ class IconSelectViewModel(
         if (current !is UiState.Success) return
         current.result.selectedIndex.value = if (shouldSelect) position else DEFAULT_INDEX
     }
+    //endregion
 
     sealed interface IconSelectUiAction
     class Select(val position: Int, val shouldSelect: Boolean) : IconSelectUiAction

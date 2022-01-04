@@ -7,10 +7,8 @@ import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.content.pm.ShortcutManager
-import android.graphics.Bitmap
 import android.os.Build
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toBitmap
 import com.madderate.wukong.model.CustomShortcutInfo
 import com.madderate.wukong.utils.WukongLog
 
@@ -33,12 +31,12 @@ object Wukong {
         // else we need to check whether shortcut permission has granted
         val permissionState =
             ContextCompat.checkSelfPermission(context, PERMISSION_INSTALL_SHORTCUT)
-        if (permissionState != PackageManager.PERMISSION_GRANTED)
-            return false
-        return true
+        return permissionState == PackageManager.PERMISSION_GRANTED
     }
 
+    @JvmOverloads
     @JvmStatic
+    @Suppress("DEPRECATION")
     fun requestPinShortcut(
         context: Context,
         shortcut: CustomShortcutInfo,
@@ -53,18 +51,13 @@ object Wukong {
                 false
             }
         }
-
         if (!isRequestPinShortcutSupported(context)) return false
-
         try {
-            val appName = shortcut.customShortcutName
+            val appName = shortcut.customAppName
             val duplicate = shortcut.duplicatable
-            val launchIntent = shortcut.intents?.last()!!
-            val shortcutBmp: Bitmap? = when (val iconType = shortcut.customIconType) {
-                is CustomShortcutInfo.BitmapIcon -> iconType.bitmap
-                is CustomShortcutInfo.DrawableIcon -> iconType.drawable.toBitmap()
-                CustomShortcutInfo.EmptyIcon -> null
-            }!!
+            val launchIntent = shortcut.intent
+            val shortcutBmp = shortcut.customAppIconBmp
+                ?: throw NullPointerException("Icon bitmap shouldn't be null!")
             val broadcastIntent = Intent(ACTION_INSTALL_SHORTCUT)
                 .putExtra(EXTRA_DUPLICATE, duplicate)
                 .putExtra(Intent.EXTRA_SHORTCUT_NAME, appName)
@@ -79,10 +72,10 @@ object Wukong {
                     kotlin.runCatching { callback.sendIntent(p0, 0, null, null, null) }
                 }
             }, null, Activity.RESULT_OK, null, null)
-            return true
         } catch (e: Exception) {
-            WukongLog.e("Error occred when try to pin shortcut", e)
+            WukongLog.e("Error occured when try to send broadcast...", e)
             return false
         }
+        return true
     }
 }

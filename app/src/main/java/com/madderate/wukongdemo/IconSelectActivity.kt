@@ -128,9 +128,9 @@ class IconSelectActivity : BaseActivity() {
     ) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             itemsIndexed(shortcuts) { i, shortcut ->
-                val name = shortcut.customShortcutName
+                val name = shortcut.originAppName
                 val isSelected = i == selectedIndex
-                PackageInfoRow(i, name, shortcut.appShortcutIconDrawable, isSelected, onUiAction)
+                PackageInfoRow(i, name, shortcut.originAppIconDrawable, isSelected, onUiAction)
             }
         }
     }
@@ -138,7 +138,7 @@ class IconSelectActivity : BaseActivity() {
     @Composable
     private fun PackageInfoRow(
         index: Int,
-        name: String,
+        name: CharSequence,
         appShortcutDrawable: Drawable?,
         isSelected: Boolean,
         onClick: (IconSelectViewModel.IconSelectUiAction) -> Unit
@@ -150,9 +150,8 @@ class IconSelectActivity : BaseActivity() {
                     .error(R.drawable.wukong_placeholder)
             }
         )
-        val appName: String = name
         PackageInfoRowInner(
-            appName = appName,
+            appName = name,
             isSelected = isSelected,
             painter = painter,
             modifier = Modifier
@@ -165,7 +164,7 @@ class IconSelectActivity : BaseActivity() {
 
     @Composable
     private fun PackageInfoRowInner(
-        appName: String,
+        appName: CharSequence,
         isSelected: Boolean,
         painter: ImagePainter,
         modifier: Modifier = Modifier,
@@ -175,7 +174,7 @@ class IconSelectActivity : BaseActivity() {
             val (icon, name, check) = createRefs()
             Image(
                 painter = painter,
-                contentDescription = appName,
+                contentDescription = appName.toString(),
                 modifier = Modifier
                     .constrainAs(icon) {
                         start.linkTo(parent.start, 16.dp)
@@ -188,7 +187,7 @@ class IconSelectActivity : BaseActivity() {
                 contentScale = ContentScale.Crop
             )
             Text(
-                text = appName,
+                text = appName.toString(),
                 modifier = Modifier
                     .constrainAs(name) {
                         start.linkTo(icon.end, 16.dp)
@@ -223,13 +222,12 @@ class IconSelectActivity : BaseActivity() {
     private fun IconSelectActivityPreview() {
         WukongBasicTheme {
             val customShortcut = CustomShortcutInfo(
-                appShortcutIconDrawable = null,
-                targetPackageName = "com.madderate.wukongdemo",
-                targetActivityPackageName = "com.madderate.wukongdemo",
-                targetActivityClzName = "IconSelectActivity"
-            ).apply {
-                customShortcutName = stringResource(id = R.string.app_name)
-            }
+                originAppIconDrawable = null,
+                originAppName = stringResource(id = R.string.app_name),
+                packageName = "com.madderate.wukongdemo",
+                activityPkgName = "com.madderate.wukongdemo",
+                activityClzName = "IconSelectActivity"
+            )
             val list = listOf(customShortcut)
             MainContentInner(list, InstalledAppInfo.PinShortcutState.Success("成了！"), 0) {}
         }
