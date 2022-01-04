@@ -70,7 +70,7 @@ data class CustomShortcutInfo(
     fun toShortcutInfo(context: Context): ShortcutInfo {
         val id = UUID.randomUUID().toString()
         return ShortcutInfo.Builder(context, id)
-            .setShortLabel(originAppName)
+            .setShortLabel(customAppName)
             .setIntents(arrayOf(intent))
             .setIcon(getIcon())
             .build()
